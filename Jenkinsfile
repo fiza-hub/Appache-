@@ -1,51 +1,46 @@
 pipeline {
     agent any
-
+    environment {
+        SERVER_USER = 'ubuntu' // Corrected typo from 'ubunbu'
+        SERVER_IP = '16.16.67.15'
+        TARGET_DIR = '/var/www/html'
+    }
     stages {
-        stage('Checkout') {
+        stage('Clone Repository') {
             steps {
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/fiza-hub/Appache-'
-                    ]]
-                ])
+                checkout scm
             }
         }
-
         stage('Build') {
             steps {
-                echo 'Building project...'
-                // No build step required for HTML/CSS/JS
+                echo 'Building...'
+                // Replace with actual build commands if needed.
             }
         }
-        
-        stage('Deploy') {
+        stage('Deploy to Apache Server') {
             steps {
-                sshagent(['apache']) { // Use the correct credential ID here
+                // Use SSH credentials with ID 'keyForApache'
+                sshagent(['appache']) {
                     sh '''
-                    # Transfer index.html and related files to Apache2 directory
-                    scp -o StrictHostKeyChecking=no index.html ubuntu@13.60.223.61:/tmp/
-
-                    # Move files to /var/www/html/ and restart Apache2
-                    ssh -o StrictHostKeyChecking=no ubuntu@13.60.223.61 << EOF
-                    sudo mv /tmp/index.html /var/www/html/
-                    sudo systemctl restart apache2
-                    EOF
+                    # Clean up target directory on the server
+                    ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} "rm -rf ${TARGET_DIR}/*"
+                    
+                    # Copy files to the server
+                    scp -o StrictHostKeyChecking=no -r * ${SERVER_USER}@${SERVER_IP}:${TARGET_DIR}
+                    
+                    # Restart Apache
+                    ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} "sudo systemctl restart apache2"
                     '''
                 }
             }
         }
     }
-
     post {
         success {
-            echo 'Deployment successful!'
+            echo 'Deployment Successful!'
         }
         failure {
-            echo 'Deployment failed!'
+            echo 'Deployment Failed!'
         }
     }
 }
