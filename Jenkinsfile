@@ -9,8 +9,7 @@ pipeline {
                     doGenerateSubmoduleConfigurations: false,
                     extensions: [],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/fiza-hub/Appache-',
-        
+                        url: 'https://github.com/fiza-hub/Appache-'
                     ]]
                 ])
             }
@@ -25,10 +24,16 @@ pipeline {
         
         stage('Deploy') {
             steps {
-                sshagent(['ubuntu']) {
+                sshagent(['apache']) { // Use the correct credential ID here
                     sh '''
-                    # Transfer files to the Apache2 server
-                    scp -o StrictHostKeyChecking=no -r * ubuntu@13.60.223.61:/var/www/html/
+                    # Transfer index.html and related files to Apache2 directory
+                    scp -o StrictHostKeyChecking=no index.html ubuntu@13.60.223.61:/tmp/
+
+                    # Move files to /var/www/html/ and restart Apache2
+                    ssh -o StrictHostKeyChecking=no ubuntu@13.60.223.61 << EOF
+                    sudo mv /tmp/index.html /var/www/html/
+                    sudo systemctl restart apache2
+                    EOF
                     '''
                 }
             }
