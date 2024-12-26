@@ -3,67 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Benefits of Individual Work</title>
+    <title>Recipe Book</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        header {
-            background-color: #4CAF50;
-            color: white;
-            text-align: center;
-            padding: 1em 0;
         }
         .container {
-            max-width: 1200px;
-            margin: 2em auto;
-            padding: 0 1em;
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
         }
-        .benefit {
-            background: white;
-            margin: 1em 0;
-            padding: 1em;
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .recipe-form, .recipe-list {
+            margin: 20px 0;
+        }
+        .recipe-form input, .recipe-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ccc;
         }
-        .benefit h2 {
-            margin: 0 0 0.5em;
-            color: #4CAF50;
+        .recipe-form button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
-        .benefit p {
-            margin: 0;
+        .recipe-form button:hover {
+            background-color: #45a049;
+        }
+        .recipe-card {
+            background-color: #fff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .recipe-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .favorite {
+            color: red;
+            cursor: pointer;
+        }
+        .delete {
+            color: red;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .search-bar input {
+            padding: 10px;
+            width: 100%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Benefits of Individual Work</h1>
-    </header>
     <div class="container">
-        <div class="benefit">
-            <h2>Full Control</h2>
-            <p>Freedom to decide tasks and approaches without relying on others.</p>
+        <h1>Recipe Book</h1>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <input type="text" id="search" placeholder="Search recipes..." oninput="searchRecipes()">
         </div>
-        <div class="benefit">
-            <h2>Faster Execution</h2>
-            <p>Tasks are completed quickly without delays caused by group dynamics.</p>
+
+        <!-- Recipe Form -->
+        <div class="recipe-form">
+            <input type="text" id="recipeName" placeholder="Recipe Name" required>
+            <textarea id="ingredients" placeholder="Ingredients" rows="3" required></textarea>
+            <textarea id="instructions" placeholder="Instructions" rows="5" required></textarea>
+            <input type="file" id="image" accept="image/*">
+            <button onclick="addRecipe()">Add Recipe</button>
         </div>
-        <div class="benefit">
-            <h2>Personal Accountability</h2>
-            <p>Clear ownership of outcomes and responsibilities.</p>
-        </div>
-        <div class="benefit">
-            <h2>Creative Freedom</h2>
-            <p>Opportunity to innovate and experiment without compromise.</p>
-        </div>
-        <div class="benefit">
-            <h2>Flexibility</h2>
-            <p>Easily adapt to changing priorities or needs.</p>
+
+        <!-- Recipe List -->
+        <div class="recipe-list" id="recipeList">
+            <!-- Recipes will be listed here -->
         </div>
     </div>
+
+    <script>
+        let recipes = [];
+
+        // Function to add a new recipe
+        function addRecipe() {
+            const name = document.getElementById("recipeName").value;
+            const ingredients = document.getElementById("ingredients").value;
+            const instructions = document.getElementById("instructions").value;
+            const imageFile = document.getElementById("image").files[0];
+
+            if (!name || !ingredients || !instructions) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            const recipe = {
+                id: Date.now(),
+                name,
+                ingredients,
+                instructions,
+                image: imageFile ? URL.createObjectURL(imageFile) : '',
+                favorite: false
+            };
+
+            recipes.push(recipe);
+            displayRecipes();
+            clearForm();
+        }
+
+        // Function to display recipes
+        function displayRecipes() {
+            const recipeList = document.getElementById("recipeList");
+            recipeList.innerHTML = '';  // Clear existing list
+
+            recipes.forEach(recipe => {
+                const recipeCard = document.createElement("div");
+                recipeCard.classList.add("recipe-card");
+
+                recipeCard.innerHTML = `
+                    <h3>${recipe.name} <span class="favorite" onclick="toggleFavorite(${recipe.id})">${recipe.favorite ? '❤️' : '♡'}</span></h3>
+                    <p><strong>Ingredients:</strong> ${recipe.ingredients}</p>
+                    <p><strong>Instructions:</strong> ${recipe.instructions}</p>
+                    ${recipe.image ? `<img src="${recipe.image}" alt="${recipe.name}">` : ''}
+                    <br>
+                    <span class="delete" onclick="deleteRecipe(${recipe.id})">Delete</span>
+                `;
+                recipeList.appendChild(recipeCard);
+            });
+        }
+
+        // Function to toggle recipe as favorite
+        function toggleFavorite(id) {
+            const recipe = recipes.find(recipe => recipe.id === id);
+            recipe.favorite = !recipe.favorite;
+            displayRecipes();
+        }
+
+        // Function to delete a recipe
+        function deleteRecipe(id) {
+            recipes = recipes.filter(recipe => recipe.id !== id);
+            displayRecipes();
+        }
+
+        // Function to clear the form
+        function clearForm() {
+            document.getElementById("recipeName").value = '';
+            document.getElementById("ingredients").value = '';
+            document.getElementById("instructions").value = '';
+            document.getElementById("image").value = '';
+        }
+
+        // Function to search recipes
+        function searchRecipes() {
+            const query = document.getElementById("search").value.toLowerCase();
+            const filteredRecipes = recipes.filter(recipe =>
+                recipe.name.toLowerCase().includes(query) || 
+                recipe.ingredients.toLowerCase().includes(query)
+            );
+            displayFilteredRecipes(filteredRecipes);
+        }
+
+        // Function to display filtered recipes
+        function displayFilteredRecipes(filteredRecipes) {
+            const recipeList = document.getElementById("recipeList");
+            recipeList.innerHTML = '';  // Clear existing list
+
+            filteredRecipes.forEach(recipe => {
+                const recipeCard = document.createElement("div");
+                recipeCard.classList.add("recipe-card");
+
+                recipeCard.innerHTML = `
+                    <h3>${recipe.name} <span class="favorite" onclick="toggleFavorite(${recipe.id})">${recipe.favorite ? '❤️' : '♡'}</span></h3>
+                    <p><strong>Ingredients:</strong> ${recipe.ingredients}</p>
+                    <p><strong>Instructions:</strong> ${recipe.instructions}</p>
+                    ${recipe.image ? `<img src="${recipe.image}" alt="${recipe.name}">` : ''}
+                    <br>
+                    <span class="delete" onclick="deleteRecipe(${recipe.id})">Delete</span>
+                `;
+                recipeList.appendChild(recipeCard);
+            });
+        }
+    </script>
 </body>
 </html>
