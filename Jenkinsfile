@@ -1,46 +1,45 @@
 pipeline {
     agent any
-    environment {
-        SERVER_USER = 'ubuntu' // Corrected typo from 'ubunbu'
-        SERVER_IP = '16.16.67.15'
-        TARGET_DIR = '/var/www/html'
-    }
+
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                checkout scm
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/fiza-hub/Appache-.git',
+                    ]]
+                ])
             }
         }
+
         stage('Build') {
             steps {
-                echo 'Building...'
-                // Replace with actual build commands if needed.
+                echo 'Building project...'
+                // No build step required for HTML/CSS/JS
             }
         }
-        stage('Deploy to Apache Server') {
+        
+        stage('Deploy') {
             steps {
-                // Use SSH credentials with ID 'keyForApache'
                 sshagent(['appache']) {
                     sh '''
-                    # Clean up target directory on the server
-                    ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} "rm -rf ${TARGET_DIR}/*"
-                    
-                    # Copy files to the server
-                    scp -o StrictHostKeyChecking=no -r * ${SERVER_USER}@${SERVER_IP}:${TARGET_DIR}
-                    
-                    # Restart Apache
-                    ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} "sudo systemctl restart apache2"
+                    # Transfer files to the Apache2 server
+                    scp -o StrictHostKeyChecking=no -r * ubuntu@16.16.67.15:/var/www/html/
                     '''
                 }
             }
         }
     }
+
     post {
         success {
-            echo 'Deployment Successful!'
+            echo 'Deployment successful!'
         }
         failure {
-            echo 'Deployment Failed!'
+            echo 'Deployment failed!'
         }
     }
 }
